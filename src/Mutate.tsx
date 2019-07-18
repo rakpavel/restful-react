@@ -27,8 +27,14 @@ export type MutateMethod<TData, TRequestBody> = (
  */
 export interface Meta {
   /** The absolute path of this request. */
-  absolutePath: string;
+  absolutePath: string | undefined;
 }
+
+type Verb = "POST" | "PUT" | "PATCH" | "DELETE";
+
+export type PathMethod<TRequestBody> = (data: TRequestBody) => string;
+
+export type VerbMethod<TRequestBody> = (data: TRequestBody) => Verb;
 
 /**
  * Props for the <Mutate /> component.
@@ -38,7 +44,7 @@ export interface MutateProps<TData, TError, TQueryParams, TRequestBody> {
    * The path at which to request data,
    * typically composed by parents or the RestfulProvider.
    */
-  path?: string;
+  path?: string | PathMethod<TRequestBody>;
   /**
    * @private This is an internal implementation detail in restful-react, not meant to be used externally.
    * This helps restful-react correctly override `path`s when a new `base` property is provided.
@@ -47,7 +53,7 @@ export interface MutateProps<TData, TError, TQueryParams, TRequestBody> {
   /**
    * What HTTP verb are we using?
    */
-  verb: "POST" | "PUT" | "PATCH" | "DELETE";
+  verb: Verb | VerbMethod<TRequestBody>;
   /**
    * Query parameters
    */
@@ -123,10 +129,13 @@ class ContextlessMutate<TData, TError, TQueryParams, TRequestBody> extends React
       __internal_hasExplicitBase,
       base,
       parentPath,
-      path,
-      verb,
+      path: tmpPath,
+      verb: tmpVerb,
       requestOptions: providerRequestOptions,
     } = this.props;
+    const path = typeof tmpPath === "function" ? tmpPath(body) : tmpPath;
+    const verb = typeof tmpVerb === "function" ? tmpVerb(body) : tmpVerb;
+
     this.setState(() => ({ error: null, loading: true }));
 
     const makeRequestPath = () => {
@@ -216,7 +225,11 @@ class ContextlessMutate<TData, TError, TQueryParams, TRequestBody> extends React
     const { children, path, base, parentPath } = this.props;
     const { error, loading } = this.state;
 
-    return children(this.mutate, { loading, error }, { absolutePath: composeUrl(base!, parentPath!, path!) });
+    return children(
+      this.mutate,
+      { loading, error },
+      { absolutePath: typeof path === "function" ? undefined : composeUrl(base!, parentPath!, path!) },
+    );
   }
 }
 
@@ -236,7 +249,10 @@ function Mutate<TData = any, TError = any, TQueryParams = { [key: string]: any }
   return (
     <RestfulReactConsumer>
       {contextProps => (
-        <RestfulReactProvider {...contextProps} parentPath={composePath(contextProps.parentPath, props.path!)}>
+        <RestfulReactProvider
+          {...contextProps}
+          parentPath={composePath(contextProps.parentPath, typeof props.path !== "function" ? props.path! : undefined)}
+        >
           <ContextlessMutate<TData, TError, TQueryParams, TRequestBody>
             {...contextProps}
             {...props}

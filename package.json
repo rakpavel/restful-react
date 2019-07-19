@@ -46,7 +46,8 @@
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "lint": "tslint src/**/*{ts,tsx} --project .",
     "prepublishOnly": "operational-scripts prepare && rollup -c rollup.config.js",
-    "ci": "[ ! -z $DANGER_GITHUB_API_TOKEN ] && yarn danger ci || echo \"Skipping Danger for External Contributor\""
+    "ci": "[ ! -z $DANGER_GITHUB_API_TOKEN ] && yarn danger ci || echo \"Skipping Danger for External Contributor\"",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@operational/scripts": "1.4.0-1c795b9",

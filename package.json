@@ -42,7 +42,7 @@
     "start": "operational-scripts start",
     "test": "operational-scripts test",
     "build": "operational-scripts build --for npm && rollup -c rollup.config.js",
-    "preversion": "npm run build",
+    "preversion": "npm run build && git add -A",
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "lint": "tslint src/**/*{ts,tsx} --project .",
     "prepublishOnly": "operational-scripts prepare && rollup -c rollup.config.js",
